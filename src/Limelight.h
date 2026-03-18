@@ -591,8 +591,13 @@ const char* LiGetStageName(int stage);
 // motion instead, so a client can turn it off. Call before LiStartConnection().
 void LiSetMouseWiggleOnConnect(bool enabled);
 
-// Sends a single Opus-encoded microphone packet to the host.
+// Sends a single Opus-encoded microphone packet to the host using the default
+// 20 ms / 48 kHz packet duration.
 int LiSendMicrophoneOpusData(const unsigned char* opusData, int opusLength);
+
+// Sends a single Opus-encoded microphone packet to the host with an explicit
+// frame duration in 48 kHz samples.
+int LiSendMicrophoneOpusDataEx(const unsigned char* opusData, int opusLength, uint32_t frameDurationSamples);
 
 // Indicates whether microphone packets are currently encrypted.
 bool LiIsMicrophoneEncryptionEnabled(void);
