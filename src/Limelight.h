@@ -164,6 +164,11 @@ typedef struct _DECODE_UNIT {
     // can be calculated. This value is in microseconds.
     uint64_t enqueueTimeUs;
 
+    // Greatest number of packets retained by the RTP reorder/FEC queue while
+    // assembling this frame. This includes pending shards and completed FEC
+    // blocks waiting for the remainder of a multi-block frame.
+    uint32_t rtpQueuePeakDepth;
+
     // Presentation time in microseconds with the epoch at the first captured frame.
     // This can be used to aid frame pacing or to drop old frames that were queued too
     // long prior to display.
@@ -899,6 +904,10 @@ typedef struct _RTP_VIDEO_STATS {
     uint32_t packetCountOOS;           // out-of-sequence packets
     uint32_t packetCountInvalid;       // corrupted packets, etc
     uint32_t packetCountFecInvalid;    // invalid FEC packet
+    uint32_t currentQueueDepth;        // pending + completed reorder/FEC packets
+    uint32_t maxQueueDepth;            // stream-lifetime high watermark
+    uint64_t totalQueueDepth;          // sum of depth observations
+    uint64_t queueDepthSamples;        // one observation per processed RTP packet
 } RTP_VIDEO_STATS, *PRTP_VIDEO_STATS;
 
 const RTP_VIDEO_STATS* LiGetRTPVideoStats(void);

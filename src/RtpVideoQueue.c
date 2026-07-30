@@ -39,6 +39,7 @@ static void purgeListEntries(PRTPV_QUEUE_LIST list) {
 void RtpvCleanupQueue(PRTP_VIDEO_QUEUE queue) {
     purgeListEntries(&queue->pendingFecBlockList);
     purgeListEntries(&queue->completedFecBlockList);
+    queue->stats.currentQueueDepth = 0;
 }
 
 static void insertEntryIntoList(PRTPV_QUEUE_LIST list, PRTPV_QUEUE_ENTRY entry) {
@@ -111,6 +112,7 @@ static void reportFinalFrameFecStatus(PRTP_VIDEO_QUEUE queue) {
 // newEntry is contained within the packet buffer so we free the whole entry by freeing entry->packet
 static bool queuePacket(PRTP_VIDEO_QUEUE queue, PRTPV_QUEUE_ENTRY newEntry, PRTP_PACKET packet, int length, bool isParity, bool isFecRecovery) {
     PRTPV_QUEUE_ENTRY entry;
+    uint32_t queueDepth;
     bool outOfSequence;
 
     LC_ASSERT(!(isFecRecovery && isParity));
@@ -178,6 +180,12 @@ static bool queuePacket(PRTP_VIDEO_QUEUE queue, PRTPV_QUEUE_ENTRY newEntry, PRTP
     }
 
     insertEntryIntoList(&queue->pendingFecBlockList, newEntry);
+    queueDepth =
+            queue->pendingFecBlockList.count +
+            queue->completedFecBlockList.count;
+    if (queueDepth > queue->frameQueuePeakDepth) {
+        queue->frameQueuePeakDepth = queueDepth;
+    }
 
     return true;
 }
@@ -533,6 +541,7 @@ static void submitCompletedFrame(PRTP_VIDEO_QUEUE queue) {
 
         // Submit this packet for decoding. It will own freeing the entry now.
         removeEntryFromList(&queue->completedFecBlockList, entry);
+        entry->frameQueuePeakDepth = queue->frameQueuePeakDepth;
         queueRtpPacket(entry);
     }
 }
@@ -541,7 +550,7 @@ uint32_t RtpvGetCurrentFrameNumber(PRTP_VIDEO_QUEUE queue) {
     return queue->currentFrameNumber;
 }
 
-int RtpvAddPacket(PRTP_VIDEO_QUEUE queue, PRTP_PACKET packet, int length, PRTPV_QUEUE_ENTRY packetEntry) {
+static int addPacket(PRTP_VIDEO_QUEUE queue, PRTP_PACKET packet, int length, PRTPV_QUEUE_ENTRY packetEntry) {
     if (isBefore16(packet->sequenceNumber, queue->nextContiguousSequenceNumber)) {
         // Reject packets behind our current buffer window
         return RTPF_RET_REJECTED;
@@ -686,6 +695,10 @@ int RtpvAddPacket(PRTP_VIDEO_QUEUE queue, PRTP_PACKET packet, int length, PRTPV_
             }
         }
 
+        if (fecCurrentBlockNumber == 0 &&
+                queue->completedFecBlockList.count == 0) {
+            queue->frameQueuePeakDepth = 0;
+        }
         queue->currentFrameNumber = nvPacket->frameIndex;
 
         // Tell the control stream logic about this frame, even if we don't end up
@@ -804,3 +817,29 @@ int RtpvAddPacket(PRTP_VIDEO_QUEUE queue, PRTP_PACKET packet, int length, PRTPV_
     }
 }
 
+static void recordQueueDepth(PRTP_VIDEO_QUEUE queue) {
+    uint32_t queueDepth =
+            queue->pendingFecBlockList.count +
+            queue->completedFecBlockList.count;
+
+    queue->stats.currentQueueDepth = queueDepth;
+    if (queueDepth > queue->stats.maxQueueDepth) {
+        queue->stats.maxQueueDepth = queueDepth;
+    }
+
+    if (UINT64_MAX - queue->stats.totalQueueDepth < queueDepth) {
+        queue->stats.totalQueueDepth = UINT64_MAX;
+    }
+    else {
+        queue->stats.totalQueueDepth += queueDepth;
+    }
+    if (queue->stats.queueDepthSamples != UINT64_MAX) {
+        queue->stats.queueDepthSamples++;
+    }
+}
+
+int RtpvAddPacket(PRTP_VIDEO_QUEUE queue, PRTP_PACKET packet, int length, PRTPV_QUEUE_ENTRY packetEntry) {
+    int result = addPacket(queue, packet, length, packetEntry);
+    recordQueueDepth(queue);
+    return result;
+}

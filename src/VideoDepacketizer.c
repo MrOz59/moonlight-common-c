@@ -22,6 +22,7 @@ static uint16_t frameHostProcessingLatency;
 static uint64_t firstPacketReceiveTimeUs;
 static uint64_t firstPacketPresentationTime;
 static uint32_t firstPacketRtpTimestamp;
+static uint32_t frameRtpQueuePeakDepth;
 static bool dropStatePending;
 static bool idrFrameProcessed;
 
@@ -74,6 +75,7 @@ void initializeVideoDepacketizer(int pktSize) {
     firstPacketReceiveTimeUs = 0;
     firstPacketPresentationTime = 0;
     firstPacketRtpTimestamp = 0;
+    frameRtpQueuePeakDepth = 0;
     lastPacketPayloadLength = 0;
     dropStatePending = false;
     idrFrameProcessed = false;
@@ -489,6 +491,7 @@ static void reassembleFrame(int frameNumber, bool frameIsLTR) {
             qdu->decodeUnit.presentationTimeUs = firstPacketPresentationTime;
             qdu->decodeUnit.rtpTimestamp = firstPacketRtpTimestamp;
             qdu->decodeUnit.enqueueTimeUs = PltGetMicroseconds();
+            qdu->decodeUnit.rtpQueuePeakDepth = frameRtpQueuePeakDepth;
 
             // These might be wrong for a few frames during a transition between SDR and HDR,
             // but the effects shouldn't very noticable since that's an infrequent operation.
@@ -744,6 +747,7 @@ static bool isFirstPacket(uint8_t flags, uint8_t fecBlockNumber) {
 // The caller will free *existingEntry unless we NULL it
 static void processRtpPayload(PNV_VIDEO_PACKET videoPacket, int length,
                        uint64_t receiveTimeUs, uint64_t presentationTimeUs, uint32_t rtpTimestamp,
+                       uint32_t rtpQueuePeakDepth,
                        PLENTRY_INTERNAL* existingEntry) {
     BUFFER_DESC currentPos;
     uint32_t frameIndex;
@@ -844,6 +848,7 @@ static void processRtpPayload(PNV_VIDEO_PACKET videoPacket, int length,
         }
 
         firstPacketRtpTimestamp = rtpTimestamp;
+        frameRtpQueuePeakDepth = rtpQueuePeakDepth;
     }
 
     lastPacketInStream = streamPacketIndex;
@@ -1183,6 +1188,7 @@ void queueRtpPacket(PRTPV_QUEUE_ENTRY queueEntryPtr) {
                       queueEntry.receiveTimeUs,
                       queueEntry.presentationTimeUs,
                       queueEntry.rtpTimestamp,
+                      queueEntry.frameQueuePeakDepth,
                       &existingEntry);
 
     if (existingEntry != NULL) {

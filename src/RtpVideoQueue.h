@@ -9,6 +9,7 @@ typedef struct _RTPV_QUEUE_ENTRY {
     uint64_t receiveTimeUs;
     uint64_t presentationTimeUs;
     uint32_t rtpTimestamp;
+    uint32_t frameQueuePeakDepth;
     int length;
     bool isParity;
 } RTPV_QUEUE_ENTRY, *PRTPV_QUEUE_ENTRY;
@@ -46,6 +47,8 @@ typedef struct _RTP_VIDEO_QUEUE {
 
     uint64_t lastOosFramePresentationTimestamp;
     bool receivedOosData;
+
+    uint32_t frameQueuePeakDepth;
 
     RTP_VIDEO_STATS stats; // the above values are short-lived, this tracks stats for the life of the queue
 } RTP_VIDEO_QUEUE, *PRTP_VIDEO_QUEUE;
