@@ -1,4 +1,5 @@
 #include "Limelight-internal.h"
+#include "PacketFeedback.h"
 
 #define FIRST_FRAME_MAX 1500
 #define FIRST_FRAME_TIMEOUT_SEC 10
@@ -226,6 +227,11 @@ static void VideoReceiveThreadProc(void* context) {
         packet->sequenceNumber = BE16(packet->sequenceNumber);
         packet->timestamp = BE32(packet->timestamp);
         packet->ssrc = BE32(packet->ssrc);
+
+        // Record the arrival before the queue takes the packet: this is the
+        // moment it reached us, and it is the only signal that can show a
+        // queue filling before it overflows into loss.
+        PfRecordArrival(packet->sequenceNumber);
 
         queueStatus = RtpvAddPacket(&rtpQueue, packet, err, (PRTPV_QUEUE_ENTRY)&buffer[decryptedSize]);
 

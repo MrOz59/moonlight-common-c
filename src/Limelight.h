@@ -560,6 +560,18 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
 // This function stops streaming. This function is not thread-safe.
 void LiStopConnection(void);
 
+// Hermes protocol extension: report the arrival of individual video packets to
+// the host, so it can measure the rate the path delivered and see a queue
+// filling before it turns into loss.
+//
+// Enable this only when the host has negotiated the "packet_feedback"
+// extension. Sending an extension message the host did not agree to is not a
+// way to reach the feature -- Hermes drops it -- and other hosts do not
+// understand the message at all. Disabled by default.
+//
+// Call between LiStartConnection() and LiStopConnection().
+void LiSetPacketFeedbackEnabled(bool enabled);
+
 // This function interrupts a pending LiStartConnection() call. This interruption happens asynchronously
 // so it is not safe to start another connection before the first LiStartConnection() call returns.
 void LiInterruptConnection(void);

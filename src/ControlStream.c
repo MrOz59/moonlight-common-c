@@ -1,4 +1,5 @@
 #include "Limelight-internal.h"
+#include "PacketFeedback.h"
 
 // This is a private header, but it just contains some time macros
 #include <enet/time.h>
@@ -305,6 +306,7 @@ int initializeControlStream(void) {
     LbqInitializeLinkedBlockingQueue(&frameFecStatusQueue, 8); // Limits number of frame status reports per periodic ping interval
     LbqInitializeLinkedBlockingQueue(&asyncCallbackQueue, 30);
     PltCreateMutex(&enetMutex);
+    PfInitialize();
 
     encryptedControlStream = APP_VERSION_AT_LEAST(7, 1, 431);
 
@@ -380,6 +382,7 @@ void destroyControlStream(void) {
     freeBasicLbqList(LbqDestroyLinkedBlockingQueue(&frameFecStatusQueue));
     freeBasicLbqList(LbqDestroyLinkedBlockingQueue(&asyncCallbackQueue));
 
+    PfCleanup();
     PltDeleteMutex(&enetMutex);
 }
 
@@ -1418,6 +1421,28 @@ static void lossStatsThreadFunc(void* context) {
                     }
 
                     free(queuedFrameStatus);
+                }
+            }
+
+            // Hermes extension: per-packet feedback. Only sent when the host
+            // negotiated it, and unreliable like the other status messages --
+            // a report that misses is superseded by the next one, and holding
+            // the channel for it would delay traffic that matters more.
+            if (PfIsEnabled()) {
+                uint8_t reportBuffer[10 + (PF_MAX_METRICS * 2)];
+                int reportLength = PfBuildReport(reportBuffer, sizeof(reportBuffer));
+                if (reportLength > 0) {
+                    LC_ASSERT(peer != NULL);
+                    if (!sendMessageEnet(HERMES_PACKET_FEEDBACK_PTYPE,
+                                         (short)reportLength,
+                                         reportBuffer,
+                                         CTRL_CHANNEL_GENERIC,
+                                         ENET_PACKET_FLAG_UNSEQUENCED,
+                                         false)) {
+                        Limelog("Loss Stats: Sending packet feedback report failed: %d\n", (int)LastSocketError());
+                        ListenerCallbacks.connectionTerminated(LastSocketFail());
+                        return;
+                    }
                 }
             }
 

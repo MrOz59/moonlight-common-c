@@ -1,4 +1,5 @@
 #include "Limelight-internal.h"
+#include "PacketFeedback.h"
 
 static int stage = STAGE_NONE;
 static ConnListenerConnectionTerminated originalTerminationCallback;
@@ -66,6 +67,12 @@ void LiInterruptConnection(void) {
 }
 
 // Stop the connection by undoing the step at the current stage and those before it
+void LiSetPacketFeedbackEnabled(bool enabled) {
+    // The extension is off unless the host negotiated it. Enabling it without
+    // that agreement would send a message the host is required to drop.
+    PfSetEnabled(enabled);
+}
+
 void LiStopConnection(void) {
     // Disable termination callbacks now
     alreadyTerminated = true;
