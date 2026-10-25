@@ -6,6 +6,10 @@ static bool alreadyTerminated;
 static PLT_THREAD terminationCallbackThread;
 static int terminationCallbackErrorCode;
 
+// Moving the mouse right after connecting wakes a host display that is asleep,
+// but a host whose session never sleeps shows a cursor for it instead.
+static bool mouseWiggleOnConnect = true;
+
 // Common globals
 char* RemoteAddrString;
 struct sockaddr_storage RemoteAddr;
@@ -55,6 +59,10 @@ static const char* stageNames[STAGE_MAX] = {
     "input stream establishment",
     "microphone stream initialization"
 };
+
+void LiSetMouseWiggleOnConnect(bool enabled) {
+    mouseWiggleOnConnect = enabled;
+}
 
 // Get the name of the current stage based on its number
 const char* LiGetStageName(int stage) {
@@ -546,10 +554,12 @@ int LiStartConnection(PSERVER_INFORMATION serverInfo, PSTREAM_CONFIGURATION stre
     }
 
     // Wiggle the mouse a bit to wake the display up
-    LiSendMouseMoveEvent(1, 1);
-    PltSleepMs(10);
-    LiSendMouseMoveEvent(-1, -1);
-    PltSleepMs(10);
+    if (mouseWiggleOnConnect) {
+        LiSendMouseMoveEvent(1, 1);
+        PltSleepMs(10);
+        LiSendMouseMoveEvent(-1, -1);
+        PltSleepMs(10);
+    }
 
     ListenerCallbacks.connectionStarted();
 

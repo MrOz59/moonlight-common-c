@@ -578,6 +578,12 @@ bool LiIsMicrophoneEncryptionEnabled(void);
 // Indicates whether the host negotiated and initialized the microphone stream.
 bool LiIsMicrophoneStreamActive(void);
 
+// Whether to move the mouse by one pixel and back once the connection is up, to
+// wake a host display that went to sleep. On by default. A host that streams a
+// session of its own, such as a Gamescope session, shows its cursor for that
+// motion instead, so a client can turn it off. Call before LiStartConnection().
+void LiSetMouseWiggleOnConnect(bool enabled);
+
 // This function returns an estimate of the current RTT to the host PC obtained via ENet
 // protocol statistics. This function will fail if the current GFE version does not use
 // ENet for the control stream (very old versions), or if the ENet peer is not connected.
