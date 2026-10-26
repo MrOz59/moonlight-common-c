@@ -119,6 +119,10 @@ bool isReferenceFrameInvalidationSupportedByDecoder(void) {
            ((NegotiatedVideoFormat & VIDEO_FORMAT_MASK_AV1) && (VideoCallbacks.capabilities & CAPABILITY_REFERENCE_FRAME_INVALIDATION_AV1));
 }
 
+bool isIntraOnlyVideoFormat(void) {
+    return (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_PYROWAVE) != 0;
+}
+
 bool isReferenceFrameInvalidationEnabled(void) {
     // RFI must be supported by the server and the client decoder to be used
     return ReferenceFrameInvalidationSupported && isReferenceFrameInvalidationSupportedByDecoder();
@@ -155,3 +159,4 @@ uint64_t LiGetMicroseconds(void) {
 uint32_t LiGetHostFeatureFlags(void) {
     return SunshineFeatureFlags;
 }
+

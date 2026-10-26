@@ -113,6 +113,9 @@ int gracefullyDisconnectEnetPeer(ENetHost* host, ENetPeer* peer, enet_uint32 lin
 int extractVersionQuadFromString(const char* string, int* quad);
 bool isReferenceFrameInvalidationSupportedByDecoder(void);
 bool isReferenceFrameInvalidationEnabled(void);
+// Whether every frame of the negotiated codec decodes on its own (PyroWave),
+// so a lost frame needs neither an IDR frame nor reference invalidation.
+bool isIntraOnlyVideoFormat(void);
 void* extendBuffer(void* ptr, size_t newSize);
 
 void fixupMissingCallbacks(PDECODER_RENDERER_CALLBACKS* drCallbacks, PAUDIO_RENDERER_CALLBACKS* arCallbacks,
@@ -165,3 +168,4 @@ int LiSendMicrophoneOpusData(const unsigned char* opusData, int opusLength);
 int LiSendMicrophoneOpusDataEx(const unsigned char* opusData, int opusLength, uint32_t frameDurationSamples);
 bool LiIsMicrophoneEncryptionEnabled(void);
 bool LiIsMicrophoneStreamActive(void);
+

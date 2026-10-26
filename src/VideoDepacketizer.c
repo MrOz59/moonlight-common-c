@@ -103,7 +103,12 @@ static void dropFrameState(void) {
     // We're dropping frame state now
     dropStatePending = false;
 
-    if (strictIdrFrameWait || !idrFrameProcessed || waitingForIdrFrame || (nalChainHead && frameType == FRAME_TYPE_IDR)) {
+    if (isIntraOnlyVideoFormat()) {
+        // Every frame of an intra-only codec decodes on its own, so the next
+        // one to arrive whole recovers the stream: there is no IDR frame to
+        // wait for and no reference to invalidate.
+    }
+    else if (strictIdrFrameWait || !idrFrameProcessed || waitingForIdrFrame || (nalChainHead && frameType == FRAME_TYPE_IDR)) {
         // We'll need an IDR frame now if we're in non-RFI mode, if we've never
         // received an IDR frame, if we explicitly need an IDR frame, or if we
         // just dropped a partially processed IDR frame.
@@ -123,8 +128,11 @@ static void dropFrameState(void) {
         // Restart the count
         consecutiveFrameDrops = 0;
 
-        // Request an IDR frame
-        waitingForIdrFrame = true;
+        // Request an IDR frame. An intra-only stream doesn't need one to
+        // recover, but asking still tells the host something is wrong.
+        if (!isIntraOnlyVideoFormat()) {
+            waitingForIdrFrame = true;
+        }
         LiRequestIdrFrame();
     }
 
@@ -215,7 +223,7 @@ void validateDecodeUnitForPlayback(PDECODE_UNIT decodeUnit) {
             LC_ASSERT_VT(decodeUnit->bufferList->next->next->bufferType == BUFFER_TYPE_PPS);
             LC_ASSERT_VT(decodeUnit->bufferList->next->next->next != NULL);
         }
-        else if (NegotiatedVideoFormat & VIDEO_FORMAT_MASK_AV1) {
+        else if (NegotiatedVideoFormat & (VIDEO_FORMAT_MASK_AV1 | VIDEO_FORMAT_MASK_PYROWAVE)) {
             // We don't parse the AV1 bitstream
             LC_ASSERT_VT(decodeUnit->bufferList->bufferType == BUFFER_TYPE_PICDATA);
         }
@@ -287,7 +295,12 @@ void LiCompleteVideoFrame(VIDEO_FRAME_HANDLE handle, int drStatus) {
     PQUEUED_DECODE_UNIT qdu = handle;
     PLENTRY_INTERNAL lastEntry;
 
-    if (drStatus == DR_NEED_IDR) {
+    if (drStatus == DR_NEED_IDR && isIntraOnlyVideoFormat()) {
+        // The decoder couldn't use this frame, but the next one doesn't depend
+        // on it, so there is no queue to flush and nothing to wait for.
+        Limelog("Decoder dropped a frame of an intra-only stream\n");
+    }
+    else if (drStatus == DR_NEED_IDR) {
         Limelog("Requesting IDR frame on behalf of DR\n");
         requestDecoderRefresh();
     }
@@ -895,6 +908,15 @@ static void processRtpPayload(PNV_VIDEO_PACKET videoPacket, int length,
             }
         }
 
+        // Every frame of an intra-only codec is a keyframe, whatever its header
+        // calls it, and ends any wait a loss started.
+        if (isIntraOnlyVideoFormat()) {
+            waitingForIdrFrame = false;
+            waitingForRefInvalFrame = false;
+            waitingForNextSuccessfulFrame = false;
+            frameType = FRAME_TYPE_IDR;
+        }
+
         // Sunshine can provide host processing latency of the frame
         LC_ASSERT_VT(currentPos.length >= 3);
         if (IS_SUNSHINE() && currentPos.length >= 3) {
@@ -1137,6 +1159,13 @@ void notifyFrameLost(unsigned int frameNumber, bool speculative) {
     // Drop state and determine if we need an IDR frame or if RFI is okay
     dropFrameState();
 
+    // An intra-only stream recovers with its next frame, without asking the
+    // host for anything.
+    if (isIntraOnlyVideoFormat()) {
+        nextFrameNumber = frameNumber + 1;
+        return;
+    }
+
     // If dropFrameState() determined that RFI was usable, issue it now
     if (!waitingForIdrFrame) {
         LC_ASSERT(waitingForRefInvalFrame);
@@ -1195,3 +1224,4 @@ void queueRtpPacket(PRTPV_QUEUE_ENTRY queueEntryPtr) {
 int LiGetPendingVideoFrames(void) {
     return LbqGetItemCount(&decodeUnitQueue);
 }
+
