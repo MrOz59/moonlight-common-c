@@ -243,6 +243,8 @@ typedef struct _DECODE_UNIT {
 // it with x-nv-vqos[0].bitStreamFormat=64. Each video frame carries one whole
 // PyroWave frame and is framed like AV1: the frame header gives the frame type
 // and the exact length of the last packet, and nothing parses the bitstream.
+// Every frame decodes on its own, so a lost one is skipped: the next frame to
+// arrive whole is shown, with no IDR frame to wait for or ask the host for.
 //
 // It is preferred over every other codec the host also offers, so a client
 // lists it in supportedVideoFormats only when it wants PyroWave. Against a host

@@ -406,9 +406,11 @@ static void queueFrameInvalidationTuple(uint32_t startFrame, uint32_t endFrame) 
             LiRequestIdrFrame();
         }
     }
-    else {
+    else if (!isIntraOnlyVideoFormat()) {
         LiRequestIdrFrame();
     }
+    // An intra-only stream has no references to invalidate, and its next frame
+    // decodes on its own: there is nothing to ask the host for.
 }
 
 // Request an IDR frame on demand by the decoder
