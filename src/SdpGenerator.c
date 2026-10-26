@@ -637,3 +637,4 @@ char* getSdpPayloadForStreamConfig(int rtspClientVersion, int* length) {
     *length = offset;
     return payload;
 }
+

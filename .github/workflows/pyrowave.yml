@@ -1,0 +1,21 @@
+name: PyroWave transport regressions
+on:
+  push:
+    branches: [feature/pyrowave-android]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  depacketizer:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - run: bash tests/run-pyrowave.sh
+        env:
+          CC: ${{ matrix.compiler }}

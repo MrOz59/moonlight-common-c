@@ -168,3 +168,4 @@ int LiSendMicrophoneOpusData(const unsigned char* opusData, int opusLength);
 int LiSendMicrophoneOpusDataEx(const unsigned char* opusData, int opusLength, uint32_t frameDurationSamples);
 bool LiIsMicrophoneEncryptionEnabled(void);
 bool LiIsMicrophoneStreamActive(void);
+

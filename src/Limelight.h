@@ -1076,3 +1076,4 @@ uint32_t LiGetHostFeatureFlags(void);
 #ifdef __cplusplus
 }
 #endif
+

@@ -1090,7 +1090,9 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
             goto Exit;
         }
         
-        if ((StreamConfig.supportedVideoFormats & VIDEO_FORMAT_MASK_PYROWAVE) && strstr(response.payload, "PYROWAVE/90000")) {
+        if ((StreamConfig.supportedVideoFormats & VIDEO_FORMAT_MASK_PYROWAVE) &&
+                (serverInfo->serverCodecModeSupport & SCM_PYROWAVE) &&
+                strstr(response.payload, "PYROWAVE/90000")) {
             Limelog("Host offers PyroWave; using it\n");
             NegotiatedVideoFormat = VIDEO_FORMAT_PYROWAVE;
         }
@@ -1515,3 +1517,4 @@ Exit:
 
     return ret;
 }
+

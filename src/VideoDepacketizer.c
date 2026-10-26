@@ -1224,3 +1224,4 @@ void queueRtpPacket(PRTPV_QUEUE_ENTRY queueEntryPtr) {
 int LiGetPendingVideoFrames(void) {
     return LbqGetItemCount(&decodeUnitQueue);
 }
+
