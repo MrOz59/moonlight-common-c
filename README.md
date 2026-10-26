@@ -2,8 +2,8 @@
 
 This is [moonlight-common-c](https://github.com/moonlight-stream/moonlight-common-c)
 with what the [Hestia](https://github.com/MrOz59/Hestia) clients need on top:
-[Hermes](https://github.com/MrOz59/Hermes) protocol extensions, Apollo's
-microphone passthrough and a few client options. Everything else is upstream's,
+[Hermes](https://github.com/MrOz59/Hermes) protocol extensions, the PyroWave codec,
+Apollo's microphone passthrough and a few client options. Everything else is upstream's,
 kept current by cherry-picking it onto the branches below.
 
 ## Branches
@@ -11,9 +11,9 @@ kept current by cherry-picking it onto the branches below.
 | Branch | Used by | What it is |
 | --- | --- | --- |
 | `master` | | Upstream's `master`, unchanged and kept in sync. |
-| `hestia` | [Hestia](https://github.com/MrOz59/Hestia) (desktop) | Upstream plus the Hermes extensions, microphone passthrough and mouse wiggle option. |
-| `hestia-android` | [Hestia-Android](https://github.com/MrOz59/Hestia-Android) | [Artemis'](https://github.com/ClassicOldSong/moonlight-common-c) commits, upstream cherry-picked on top, plus microphone passthrough and the mouse wiggle option. |
-| `feature/pyrowave-codec` | | Work in progress: the PyroWave codec in the API and SDP. |
+| `hestia` | [Hestia](https://github.com/MrOz59/Hestia) (desktop) | Upstream plus the Hermes extensions, PyroWave, microphone passthrough and the mouse wiggle option. |
+| `hestia-android` | [Hestia-Android](https://github.com/MrOz59/Hestia-Android) | [Artemis'](https://github.com/ClassicOldSong/moonlight-common-c) commits, upstream cherry-picked on top, plus PyroWave, microphone passthrough and the mouse wiggle option. |
+| `feature/pyrowave-codec` | Hestia desktop's `feature/pyrowave-codec` | Upstream plus only PyroWave, where it was developed. It is on `hestia` and `hestia-android` too. |
 | `atomics`, `safestring` | | Upstream's own old branches, as they were when this was forked. |
 
 The clients pin commits of `hestia` and `hestia-android`, so those branches only
@@ -30,6 +30,32 @@ ever move forward: nothing a client pins is rebased away.
 - RTP reorder/FEC queue depth telemetry: `RTP_VIDEO_STATS` gains
   `currentQueueDepth`, `maxQueueDepth`, `totalQueueDepth` and
   `queueDepthSamples`, and `DECODE_UNIT` gains `rtpQueuePeakDepth`.
+
+### PyroWave (`hestia`, `hestia-android`)
+
+[PyroWave](https://github.com/Themaister/pyrowave) is an intra-only wavelet
+codec for LAN streaming at high bitrates (around 200 Mbit/s and up), which
+Hermes can encode. It only comes into play when a client lists
+`VIDEO_FORMAT_PYROWAVE` in `supportedVideoFormats`; every other stream is
+untouched.
+
+- The host offers it with `SCM_PYROWAVE` (`0x40000000`) in
+  `ServerCodecModeSupport` and an `a=rtpmap:98 PYROWAVE/90000` line in its
+  RTSP DESCRIBE answer. The client then asks for it with
+  `x-nv-vqos[0].bitStreamFormat=64`. These values are kept well clear of the
+  ones Sunshine hands out in sequence.
+- When the client lists it and the host offers it, it wins over every other
+  codec the host offers; when the host doesn't, negotiation carries on as if
+  it hadn't been listed (and logs that).
+- Frames are carried like AV1: one whole PyroWave frame per video frame, with
+  the exact length of the last packet in the frame header and no bitstream
+  parsing.
+- Every frame decodes on its own, so a frame lost to the network, to FEC or
+  to the decoder is just skipped: no waiting for an IDR frame and no IDR
+  request to the host.
+- `VIDEO_FORMAT_PYROWAVE` (`0x01000000`) is 8-bit 4:2:0; the rest of
+  `VIDEO_FORMAT_MASK_PYROWAVE` is kept for the 4:4:4 and 10-bit profiles
+  PyroWave also has.
 
 ### Microphone passthrough (`hestia`, `hestia-android`)
 
