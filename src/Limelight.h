@@ -537,9 +537,9 @@ void LiInitializeConnectionCallbacks(PCONNECTION_LISTENER_CALLBACKS clCallbacks)
 #define SCM_HEVC_REXT10_444 0x00100000 // Sunshine extension
 #define SCM_AV1_HIGH8_444   0x00200000 // Sunshine extension
 #define SCM_AV1_HIGH10_444  0x00400000 // Sunshine extension
-
-// Hermes extension; keep aligned with the desktop transport.
-#define SCM_PYROWAVE 0x40000000
+// Hermes extension (see VIDEO_FORMAT_PYROWAVE), on a bit far from the ones
+// Sunshine hands out in sequence, so a future Sunshine codec can't be read as it.
+#define SCM_PYROWAVE        0x40000000
 
 // SCM masks to identify various codec capabilities
 #define SCM_MASK_H264   (SCM_H264 | SCM_H264_HIGH8_444)

@@ -1144,6 +1144,11 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
             }
         }
 
+        if ((StreamConfig.supportedVideoFormats & VIDEO_FORMAT_MASK_PYROWAVE) &&
+                !(NegotiatedVideoFormat & VIDEO_FORMAT_MASK_PYROWAVE)) {
+            Limelog("Host does not offer PyroWave; negotiated another codec instead\n");
+        }
+
         // Look for the SDP attribute that indicates we're dealing with a server that supports RFI
         ReferenceFrameInvalidationSupported = strstr(response.payload, "x-nv-video[0].refPicInvalidation") != NULL;
         if (!ReferenceFrameInvalidationSupported) {
