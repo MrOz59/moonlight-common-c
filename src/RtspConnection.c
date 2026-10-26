@@ -1091,6 +1091,7 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
         }
         
         if ((StreamConfig.supportedVideoFormats & VIDEO_FORMAT_MASK_PYROWAVE) && strstr(response.payload, "PYROWAVE/90000")) {
+            Limelog("Host offers PyroWave; using it\n");
             NegotiatedVideoFormat = VIDEO_FORMAT_PYROWAVE;
         }
         else if ((StreamConfig.supportedVideoFormats & VIDEO_FORMAT_MASK_AV1) && strstr(response.payload, "AV1/90000")) {
@@ -1139,6 +1140,11 @@ int performRtspHandshake(PSERVER_INFORMATION serverInfo) {
             if (StreamConfig.width > 4096 || StreamConfig.height > 4096) {
                 Limelog("WARNING: Host PC doesn't support HEVC. Streaming at resolutions above 4K using H.264 will likely fail!\n");
             }
+        }
+
+        if ((StreamConfig.supportedVideoFormats & VIDEO_FORMAT_MASK_PYROWAVE) &&
+                !(NegotiatedVideoFormat & VIDEO_FORMAT_MASK_PYROWAVE)) {
+            Limelog("Host does not offer PyroWave; negotiated another codec instead\n");
         }
 
         // Look for the SDP attribute that indicates we're dealing with a server that supports RFI
