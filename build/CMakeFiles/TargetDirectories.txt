@@ -1,0 +1,14 @@
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/moonlight-common-c.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/edit_cache.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/rebuild_cache.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/list_install_components.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/install.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/install/local.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/CMakeFiles/install/strip.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/enet.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/edit_cache.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/rebuild_cache.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/list_install_components.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/install.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/install/local.dir
+/tmp/claude-0/-home-claude/a0ee4ce7-4740-5de6-a408-de61c053de4d/scratchpad/mlc/build/enet/CMakeFiles/install/strip.dir
